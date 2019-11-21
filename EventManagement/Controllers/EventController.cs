@@ -55,16 +55,41 @@ namespace EventManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,StartDate,Duration,Brief")] EventItem eventItem)
         {
-            //  string[] datetime = eventItem.StartDate.ToString().Split(' ');
-           var time= eventItem.StartDate.TimeOfDay;
+           
             
+            var time= eventItem.StartDate.TimeOfDay;
+            List<EventItem> eventlist = _context.EventItem.ToList();
+            foreach (var item in eventlist)
+            {
+                var oldstartdate = item.StartDate.Date;
+                var newstartdate = eventItem.StartDate.Date;
+                if (oldstartdate == newstartdate)
+                {
+                    var oldstarttime = item.StartDate.TimeOfDay;
+                    var newstarttime = eventItem.StartDate.TimeOfDay;
+                    var oldendtime = oldstarttime.Add (TimeSpan.FromMinutes(item.Duration));
+                    var newendtime=newstarttime.Add(TimeSpan.FromMinutes(eventItem.Duration));
+                    if (!((newstarttime > oldendtime && newendtime> oldstarttime) || (newstarttime< oldstarttime && newendtime < oldendtime)))
+                    {
+                        ViewBag.Message = "Event time/date overlapped";
+                        return View("Status");
+                    }
+
+
+                }
+                
+
+            }
             var endtime = TimeSpan.Parse("20:00");
+
             if (TimeSpan.Compare(time, endtime) >= 1)
             {
                 ViewBag.Message = "Event start time shoud be less than 8:00Pm";
                 return View("Status");
 
             }
+          
+
             else
             {
                 if (ModelState.IsValid)
