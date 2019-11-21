@@ -55,15 +55,34 @@ namespace EventManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,StartDate,Duration,Brief")] EventItem eventItem)
         {
-            if (ModelState.IsValid)
+            //  string[] datetime = eventItem.StartDate.ToString().Split(' ');
+           var time= eventItem.StartDate.TimeOfDay;
+            
+            var endtime = TimeSpan.Parse("20:00");
+            if (TimeSpan.Compare(time, endtime) >= 1)
             {
-                _context.Add(eventItem);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ViewBag.Message = "Event start time shoud be less than 8:00Pm";
+                return View("Status");
+
             }
-            return View(eventItem);
+            else
+            {
+                if (ModelState.IsValid)
+                {
+                    _context.Add(eventItem);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(eventItem);
+            }
+            
         }
 
+    /*    private IActionResult View(object errorMessage)
+        {
+            return View("Status");
+        }
+*/
         // GET: Event/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
