@@ -73,7 +73,7 @@ namespace EventBackend.Controllers
         public async Task<IActionResult> Create([FromBody]DomainEvent eventItem)
         {
             DomainEvent receivedEvent = new DomainEvent();
-            int Id = 56;
+            Guid Id = eventItem.Id;
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
