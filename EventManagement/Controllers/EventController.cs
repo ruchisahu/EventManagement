@@ -71,7 +71,7 @@ namespace EventManagement.Controllers
                     var newendtime=newstarttime.Add(TimeSpan.FromMinutes(eventItem.Duration));
                     if (!((newstarttime > oldendtime && newendtime> oldstarttime) || (newstarttime< oldstarttime && newendtime < oldendtime)))
                     {
-                        ViewBag.Message = "Event time/date overlapped";
+                        ViewBag.Message = "Event time/date overlapped/";
                         return View("Status");
                     }
 
