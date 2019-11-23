@@ -70,7 +70,7 @@ namespace EventBackend.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int Id)
+        public async Task<IActionResult> Delete(Guid Id)
         {
             using (var client = new HttpClient())
             {
@@ -118,6 +118,46 @@ namespace EventBackend.Controllers
                 }
             }
             return Ok(eventItem);
+        }
+        [HttpPut]
+        public async Task<IActionResult> Update(Guid id)
+        {
+            DomainEvent @event = new DomainEvent();
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                using (var response = await client.GetAsync("/api/update/" + id))
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    @event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                }
+            }
+            return Ok(@event);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> Update(DomainEvent domainevent)
+        {
+            DomainEvent receivedevent = new DomainEvent();
+            using (var httpClient = new HttpClient())
+            {
+                var content = new MultipartFormDataContent();
+                content.Add(new StringContent(domainevent.Id.ToString()), "Id");
+                content.Add(new StringContent(domainevent.Name), "Name");
+                content.Add(new StringContent(domainevent.StartDate.ToString()), "StartDate");
+                content.Add(new StringContent(domainevent.Duration.ToString()), "Duration");
+                content.Add(new StringContent(domainevent.Brief), "Brief");
+
+                using (var response = await httpClient.PutAsync("/api/update/", content))
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    //ViewBag.Result = "Success";
+                    receivedevent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                }
+            }
+            return Ok(receivedevent);
         }
 
     }
