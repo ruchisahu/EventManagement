@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace EventManagement.Controllers
 {
@@ -55,21 +56,45 @@ namespace EventManagement.Controllers
             }
 
         // GET: Event/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var eventItem = await _context.EventItem
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (eventItem == null)
+            DomainEvent Event = new DomainEvent();
+            using (var client = new HttpClient())
             {
-                return NotFound();
+                client.BaseAddress = new Uri(Baseurl);
+
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                using (var response = await client.GetAsync("/api/DomainEvents/" + id))
+                {
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return NotFound();
+                    }
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    //Event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+
+                    dynamic json = JValue.Parse(apiResponse);
+                   // var jsonmessage = json.message;
+
+                   Event = JsonConvert.DeserializeObject<DomainEvent>(json.ToString());
+
+                    /*   var eventItem = await _context.EventItem
+                           .FirstOrDefaultAsync(m => m.Id == id);
+                       if (eventItem == null)
+                       {
+                           return NotFound();
+                       }
+                       */
+                }
             }
 
-            return View(eventItem);
+                    return View(Event);
         }
 
         // GET: Event/Create
