@@ -43,11 +43,9 @@ namespace EventManagement.Controllers
                 //Checking the response is successful or not which is sent using HttpClient  
                 if (Res.IsSuccessStatusCode)
                 {
-                    //Storing the response details recieved from web api   
-                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    var EventResponse = Res.Content.ReadAsStringAsync().Result;
 
-                    //Deserializing the response recieved from web api and storing into the Employee list  
-                    eventitem = JsonConvert.DeserializeObject<List<DomainEvent>>(EmpResponse);
+                    eventitem = JsonConvert.DeserializeObject<List<DomainEvent>>(EventResponse);
 
                 }
                 //returning the employee list to view  
@@ -84,13 +82,6 @@ namespace EventManagement.Controllers
 
                    Event = JsonConvert.DeserializeObject<DomainEvent>(json.ToString());
 
-                    /*   var eventItem = await _context.EventItem
-                           .FirstOrDefaultAsync(m => m.Id == id);
-                       if (eventItem == null)
-                       {
-                           return NotFound();
-                       }
-                       */
                 }
             }
 
@@ -107,7 +98,7 @@ namespace EventManagement.Controllers
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-         public async Task<IActionResult> Create([Bind("Id,Name,StartDate,Duration,Brief")] EventItem eventItem)
+         public async Task<IActionResult> Create([Bind("Id,Name,StartDate,Duration,Brief")] DomainEvent eventItem)
           {
             DomainEvent receivedEvent = new DomainEvent();
             DomainEvent domainEvent = new DomainEvent();
@@ -122,7 +113,7 @@ namespace EventManagement.Controllers
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
-                // client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
+                
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 string postitem = JsonConvert.SerializeObject(domainEvent);
@@ -134,51 +125,9 @@ namespace EventManagement.Controllers
                     receivedEvent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
                 }
             }
-            return View("Index");
+            return View(eventItem);
 
-            //var time= eventItem.StartDate.TimeOfDay;
-            //List<EventItem> eventlist = _context.EventItem.ToList();
-            //foreach (var item in eventlist)
-            //{
-            //    var oldstartdate = item.StartDate.Date;
-            //    var newstartdate = eventItem.StartDate.Date;
-            //    if (oldstartdate == newstartdate)
-            //    {
-            //        var oldstarttime = item.StartDate.TimeOfDay;
-            //        var newstarttime = eventItem.StartDate.TimeOfDay;
-            //        var oldendtime = oldstarttime.Add (TimeSpan.FromMinutes(item.Duration));
-            //        var newendtime=newstarttime.Add(TimeSpan.FromMinutes(eventItem.Duration));
-            //        if (!((newstarttime > oldendtime && newendtime> oldstarttime) || (newstarttime< oldstarttime && newendtime < oldendtime)))
-            //        {
-            //            ViewBag.Message = "Event time/date overlapped/";
-            //            return View("Status");
-            //        }
-
-
-            //    }
-
-
-            //}
-            //var endtime = TimeSpan.Parse("20:00");
-
-            //if (TimeSpan.Compare(time, endtime) >= 1)
-            //{
-            //    ViewBag.Message = "Event start time shoud be less than 8:00Pm";
-            //    return View("Status");
-
-            //}
-
-
-            //else
-            //{
-            //    if (ModelState.IsValid)
-            //    {
-            //        _context.Add(eventItem);
-            //        await _context.SaveChangesAsync();
-            //        return RedirectToAction(nameof(Index));
-            //    }
-            //    return View(eventItem);
-            //}
+          
 
         }
 
@@ -312,7 +261,7 @@ namespace EventManagement.Controllers
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
-                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
+                
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 using (var response = await client.DeleteAsync("/api/DomainEvents/" + Id))

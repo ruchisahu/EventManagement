@@ -55,17 +55,10 @@ namespace EventBackend.Controllers
                         eventitems.Add(domain);
                     }
                    
-
-                        //Deserializing the response recieved from web api and storing into the Employee list  
-                        //   eventitem = JsonConvert.DeserializeObject<List<DomainEvent>>(EventResponse);
-                        //string name=eventitem[0].Name;
-                        //  eventitem1 = eventitem;
-                        // Console.WriteLine(eventitem);
-
                     }
-                //returning the employee list to view  
+                //returning the event list to view  
                  return Ok(eventitems);
-               // return eventitems;
+              
             }
         }
 
@@ -110,6 +103,7 @@ namespace EventBackend.Controllers
                 {
                     if (!response.IsSuccessStatusCode)
                     {
+                        return BadRequest();
                         //string apiResponse = await response.Content.ReadAsStringAsync();
                         //return 
                         //receivedEvent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
@@ -136,7 +130,7 @@ namespace EventBackend.Controllers
                         return NotFound();
                     }
                         string apiResponse = await response.Content.ReadAsStringAsync();
-                    //Event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                 
 
                     dynamic json = JValue.Parse(apiResponse);
                     var jsonmessage = json.message;
