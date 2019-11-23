@@ -200,7 +200,7 @@ namespace EventManagement.Controllers
             {
                 client.BaseAddress = new Uri(Baseurl);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                using (var response = await client.GetAsync("/api/Update" + id))
+                using (var response = await client.GetAsync("/api/DomainEvents/" + id))
                 {
                     string apiResponse = await response.Content.ReadAsStringAsync();
                     item = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
@@ -213,9 +213,9 @@ namespace EventManagement.Controllers
         // POST: Event/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPut]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,StartDate,Duration,Brief")] DomainEvent domainevent)
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,StartDate,Duration,Brief")] DomainEvent domainEvent)
         {
             /*    if (id != eventItem.Id)
                 {
@@ -244,23 +244,23 @@ namespace EventManagement.Controllers
                 }
                 */
             DomainEvent receivedevent = new DomainEvent();
-            using (var httpClient = new HttpClient())
+            using (var client = new HttpClient())
             {
-                var content = new MultipartFormDataContent();
-                content.Add(new StringContent(domainevent.Id.ToString()), "Id");
-                content.Add(new StringContent(domainevent.Name), "Name");
-                content.Add(new StringContent(domainevent.StartDate.ToString()), "StartDate");
-                content.Add(new StringContent(domainevent.Duration.ToString()), "Duration");
-                content.Add(new StringContent(domainevent.Brief), "Brief");
+                client.BaseAddress = new Uri(Baseurl);
+                // client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                using (var response = await httpClient.PutAsync("/api/DomainEvents/" +id, content))
+                string postitem = JsonConvert.SerializeObject(domainEvent);
+                StringContent content = new StringContent(postitem, Encoding.UTF8, "application/json");
+
+                using (var response = await client.PutAsync("/api/DomainEvents/" +id, content))
                 {
                     string apiResponse = await response.Content.ReadAsStringAsync();
                     //ViewBag.Result = "Success";
                     receivedevent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
                 }
             }
-            return View(domainevent);
+            return View(domainEvent);
         }
 
         // GET: Event/Delete/5

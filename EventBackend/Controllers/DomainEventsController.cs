@@ -83,7 +83,7 @@ namespace EventBackend.Controllers
                     string apiResponse = await response.Content.ReadAsStringAsync();
                 }
             }
-            return RedirectToAction("AllEvents");
+            return Ok();
 
         }
 
@@ -119,45 +119,67 @@ namespace EventBackend.Controllers
             }
             return Ok(eventItem);
         }
-        [HttpPut]
-        public async Task<IActionResult> Update(Guid id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetAsync(Guid id)
         {
-            DomainEvent @event = new DomainEvent();
+            DomainEvent Event = new DomainEvent();
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
                 client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                using (var response = await client.GetAsync("/api/update/" + id))
+                using (var response = await client.GetAsync("/api/read/" + id))
                 {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    @event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return NotFound();
+                    }
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                    //Event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+
+                    dynamic json = JValue.Parse(apiResponse);
+                    var jsonmessage = json.message;
+
+                        Event = JsonConvert.DeserializeObject<DomainEvent>(jsonmessage.ToString());
                 }
             }
-            return Ok(@event);
+            return Ok(Event);
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> Update(DomainEvent domainevent)
         {
             DomainEvent receivedevent = new DomainEvent();
-            using (var httpClient = new HttpClient())
+            using (var client = new HttpClient())
             {
-                var content = new MultipartFormDataContent();
-                content.Add(new StringContent(domainevent.Id.ToString()), "Id");
-                content.Add(new StringContent(domainevent.Name), "Name");
-                content.Add(new StringContent(domainevent.StartDate.ToString()), "StartDate");
-                content.Add(new StringContent(domainevent.Duration.ToString()), "Duration");
-                content.Add(new StringContent(domainevent.Brief), "Brief");
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                using (var response = await httpClient.PutAsync("/api/update/", content))
+                string eventobject = JsonConvert.SerializeObject(domainevent);
+                string data = "{\"" + "data\":" + eventobject + "}";
+                StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
+
+
+                //var content = new MultipartFormDataContent();
+                //content.Add(new StringContent(domainevent.Id.ToString()), "Id");
+                //content.Add(new StringContent(domainevent.Name), "Name");
+                //content.Add(new StringContent(domainevent.StartDate.ToString()), "StartDate");
+                //content.Add(new StringContent(domainevent.Duration.ToString()), "Duration");
+                //content.Add(new StringContent(domainevent.Brief), "Brief");
+
+                using (var response = await client.PutAsync("/api/update/"+ domainevent.Id.ToString(), content))
                 {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    //ViewBag.Result = "Success";
-                    receivedevent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                    if(!response.IsSuccessStatusCode)
+                    {
+                        //string apiResponse = await response.Content.ReadAsStringAsync();
+                        //return 
+                        //receivedEvent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                    }
                 }
             }
-            return Ok(receivedevent);
+            return Ok(domainevent);
         }
 
     }
