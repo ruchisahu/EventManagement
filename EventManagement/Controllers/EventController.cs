@@ -25,8 +25,34 @@ namespace EventManagement.Controllers
         // GET: Event
         public async Task<IActionResult> Index()
         {
-            return View(await _context.EventItem.ToListAsync());
-        }
+            // return View(await _context.EventItem.ToListAsync());
+            List<DomainEvent> eventitem = new List<DomainEvent>();
+            using (var client = new HttpClient())
+            {
+                //Passing service base url  
+                client.BaseAddress = new Uri(Baseurl);
+
+                client.DefaultRequestHeaders.Clear();
+                //Define request data format  
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
+                HttpResponseMessage Res = await client.GetAsync("api/DomainEvents/");
+
+                //Checking the response is successful or not which is sent using HttpClient  
+                if (Res.IsSuccessStatusCode)
+                {
+                    //Storing the response details recieved from web api   
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+
+                    //Deserializing the response recieved from web api and storing into the Employee list  
+                    eventitem = JsonConvert.DeserializeObject<List<DomainEvent>>(EmpResponse);
+
+                }
+                //returning the employee list to view  
+                return View(eventitem);
+            }
+            }
 
         // GET: Event/Details/5
         public async Task<IActionResult> Details(int? id)
