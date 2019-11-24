@@ -37,7 +37,6 @@ namespace EventManagement.Controllers
                 //Define request data format  
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
                 HttpResponseMessage Res = await client.GetAsync("api/DomainEvents/");
 
                 if (Res.IsSuccessStatusCode)
@@ -84,7 +83,7 @@ namespace EventManagement.Controllers
                 }
             }
 
-                    return View(Event);
+                return View(Event);
         }
 
         // GET: Event/Create
@@ -131,33 +130,7 @@ namespace EventManagement.Controllers
             }
             return View(eventItem);
 
-          
-
         }
-
-  
-    /*    [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromBody]EventItem eventItem)
-        {
-            EventItem receivedEvent = new EventItem();
-            
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(Baseurl);
-               // client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                StringContent content = new StringContent(JsonConvert.SerializeObject(eventItem), Encoding.UTF8, "application/json");
-
-                using (var response = await client.PostAsync("api/DomainEvents/", content))
-                {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    receivedEvent = JsonConvert.DeserializeObject<EventItem>(apiResponse);
-                }
-            }
-            return Ok(receivedEvent);
-        }
-        */
         // GET: Event/Edit/5
         
         public async Task<IActionResult> Edit(Guid? id)
@@ -167,12 +140,6 @@ namespace EventManagement.Controllers
                 return NotFound();
             }
 
-            /*  var eventItem = await _context.EventItem.FindAsync(id);
-              if (eventItem == null)
-              {
-                  return NotFound();
-              }
-              */
             DomainEvent item = new DomainEvent();
             using (var client = new HttpClient())
             {
@@ -189,38 +156,12 @@ namespace EventManagement.Controllers
         }
 
         // POST: Event/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,StartDate,Duration,Brief")] DomainEvent domainEvent)
         {
-            /*    if (id != eventItem.Id)
-                {
-                    return NotFound();
-                }
-
-                if (ModelState.IsValid)
-                {
-                    try
-                    {
-                        _context.Update(eventItem);
-                        await _context.SaveChangesAsync();
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        if (!EventItemExists(eventItem.Id))
-                        {
-                            return NotFound();
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
-                    return RedirectToAction(nameof(Index));
-                }
-                */
+           
             DomainEvent receivedevent = new DomainEvent();
             using (var client = new HttpClient())
             {
@@ -234,6 +175,11 @@ namespace EventManagement.Controllers
                 using (var response = await client.PutAsync("/api/DomainEvents/" +id, content))
                 {
                     string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        ViewBag.Message = apiResponse.ToString();
+                        return View("Status");
+                    }
                     //ViewBag.Result = "Success";
                     receivedevent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
                 }
@@ -249,15 +195,7 @@ namespace EventManagement.Controllers
                 return NotFound();
             }
 
-            /*  var eventItem = await _context.EventItem
-                  .FirstOrDefaultAsync(m => m.Id == id);
-              if (eventItem == null)
-              {
-                  return NotFound();
-              }
-
-              return View(eventItem);
-              */
+           
             DomainEvent receivedEvent = new DomainEvent();
             DomainEvent domainEvent = new DomainEvent();
 
@@ -278,17 +216,7 @@ namespace EventManagement.Controllers
             return View(receivedEvent);
         }
 
-        // POST: Event/Delete/5
-   /*     [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var eventItem = await _context.EventItem.FindAsync(id);
-            _context.EventItem.Remove(eventItem);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-*/
+   
         private bool EventItemExists(int id)
         {
             return _context.EventItem.Any(e => e.Id == id);

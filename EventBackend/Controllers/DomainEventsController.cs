@@ -23,7 +23,8 @@ namespace EventBackend.Controllers
         {
             Overlap =1,
             TimeLimit=2,
-            Default=3
+            DaysLimit=3,
+            Default=4
         }
         public async Task<List<DomainEvent>> GetAllEvents()
         {
@@ -98,11 +99,15 @@ namespace EventBackend.Controllers
             var v= Validation(eventItem, eventList);
             if (Validation(eventItem, eventList) == ErrorCode.Overlap)
             {
-                 return BadRequest(new { message = "Overlapping Events" });
+                 return BadRequest(new { message = "Overlapping Events: Events should not overlaped." });
             }
             if (Validation(eventItem, eventList) == ErrorCode.TimeLimit)
             {
-                return BadRequest(new { message = "Time limit exceed" });
+                return BadRequest(new { message = "Time limit exceed: Event can not be schedule after 8:00PM" });
+            }
+            if (Validation(eventItem, eventList) == ErrorCode.DaysLimit)
+            {
+                return BadRequest(new { message = "The schedule will span across 3 days." });
             }
             using (var client = new HttpClient())
             {
@@ -130,11 +135,12 @@ namespace EventBackend.Controllers
         private ErrorCode Validation(DomainEvent eventItem, List<DomainEvent> eventlist)
         {
             var time = eventItem.StartDate.TimeOfDay;
+            var newstartdate = eventItem.StartDate.Date;
             //case 1: overlapping events
             foreach (var item in eventlist)
             {
                 var oldstartdate = item.StartDate.Date;
-                var newstartdate = eventItem.StartDate.Date;
+                
                 if (oldstartdate == newstartdate)
                 {
                     var oldstarttime = item.StartDate.TimeOfDay;
@@ -153,6 +159,11 @@ namespace EventBackend.Controllers
             if (TimeSpan.Compare(time, endtime) >= 1)
             {
                 return ErrorCode.TimeLimit;
+            }
+            var val = (newstartdate - DateTime.Now).TotalDays;
+            if ( val> 3)
+            {
+                return ErrorCode.DaysLimit;
             }
             return ErrorCode.Default;
         }
@@ -189,13 +200,18 @@ namespace EventBackend.Controllers
         {
             DomainEvent receivedevent = new DomainEvent();
             List<DomainEvent> eventList = await GetAllEvents();
+            var v = Validation(domainevent, eventList);
             if (Validation(domainevent, eventList) == ErrorCode.Overlap)
             {
-                return BadRequest(new { message = "Overlapping Events" });
+                return BadRequest(new { message = "Overlapping Events: Events should not overlaped." });
             }
             if (Validation(domainevent, eventList) == ErrorCode.TimeLimit)
             {
-                return BadRequest(new { message = "Time limit exceed" });
+                return BadRequest(new { message = "Time limit exceed: Event can not be schedule after 8:00PM" });
+            }
+            if (Validation(domainevent, eventList) == ErrorCode.DaysLimit)
+            {
+                return BadRequest(new { message = "The schedule will span across 3 days." });
             }
             using (var client = new HttpClient())
             {
