@@ -50,15 +50,8 @@ namespace EventManagement.Controllers
                 return View(eventitem);
             }
             }
-
-        // GET: Event/Details/5
-        public async Task<IActionResult> Details(Guid? id)
+        public async Task<DomainEvent> GetDetail(Guid? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             DomainEvent Event = new DomainEvent();
             using (var client = new HttpClient())
             {
@@ -68,22 +61,28 @@ namespace EventManagement.Controllers
                 using (var response = await client.GetAsync("/api/DomainEvents/" + id))
                 {
 
-                    if (!response.IsSuccessStatusCode)
+                    if (response.IsSuccessStatusCode)
                     {
-                        return NotFound();
+
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        //Event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+
+                        dynamic json = JValue.Parse(apiResponse);
+                        // var jsonmessage = json.message;
+
+                        Event = JsonConvert.DeserializeObject<DomainEvent>(json.ToString());
                     }
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    //Event = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
-
-                    dynamic json = JValue.Parse(apiResponse);
-                   // var jsonmessage = json.message;
-
-                   Event = JsonConvert.DeserializeObject<DomainEvent>(json.ToString());
 
                 }
             }
+            return Event;
+        }
+        // GET: Event/Details/5
+        public async Task<IActionResult> Details(Guid? id)
+        {
+           DomainEvent Event = await GetDetail(id);
 
-                return View(Event);
+            return View(Event);
         }
 
         // GET: Event/Create
@@ -195,31 +194,34 @@ namespace EventManagement.Controllers
                 return NotFound();
             }
 
-           
-            DomainEvent receivedEvent = new DomainEvent();
-            DomainEvent domainEvent = new DomainEvent();
 
-            Guid Id = (Guid)id;
+            DomainEvent Event = await GetDetail(id);
+
+            return View(Event);
+        }
+
+             [HttpPost, ActionName("Delete")]
+        
+        public async Task<IActionResult> DeleteConfirmed(Guid? id)
+        {
+           
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
-                
+
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                using (var response = await client.DeleteAsync("/api/DomainEvents/" + Id))
+                using (var response = await client.DeleteAsync("/api/DomainEvents/" + id))
                 {
                     string apiResponse = await response.Content.ReadAsStringAsync();
+
                 }
             }
-
-
-            return View(receivedEvent);
+            return RedirectToAction(nameof(Index));
+        }
+        
         }
 
    
-        private bool EventItemExists(int id)
-        {
-            return _context.EventItem.Any(e => e.Id == id);
-        }
     }
-}
+
