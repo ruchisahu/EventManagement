@@ -18,22 +18,19 @@ namespace EventBackend.Controllers
     public class DomainEventsController : ControllerBase
     {
         string Baseurl = "https://crud-api.azurewebsites.net";
-        
-        
-       // List<DomainEvent> eventitem = new List<DomainEvent>();
-        
-        public async Task<IActionResult> AllEvents()
+
+
+        public async Task<List<DomainEvent>> GetAllEvents()
         {
             List<DomainEvent> eventitems = new List<DomainEvent>();
-            List<DomainEvent> eventitem1 = new List<DomainEvent>();
-            List<int> rowlist=new List<int>();
+            List<int> rowlist = new List<int>();
             using (var client = new HttpClient())
             {
 
                 client.BaseAddress = new Uri(Baseurl);
 
-                 client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
                 HttpResponseMessage Res = await client.GetAsync("/api/peek/");
@@ -51,15 +48,23 @@ namespace EventBackend.Controllers
                         var data = item.data;
                         var data1 = data.ToString();
                         DomainEvent domain = new DomainEvent();
-                        domain =JsonConvert.DeserializeObject<DomainEvent>(data1);
+                        domain = JsonConvert.DeserializeObject<DomainEvent>(data1);
                         eventitems.Add(domain);
                     }
-                   
-                    }
+
+                }
                 //returning the event list to view  
-                 return Ok(eventitems);
-              
+                return eventitems;
+
             }
+        }
+        [HttpGet]
+        public async Task<IActionResult> AllEvents()
+        {
+            List<DomainEvent> eventitems =  await GetAllEvents();
+
+            return Ok(eventitems);
+
         }
 
         [HttpDelete("{id}")]
@@ -85,7 +90,12 @@ namespace EventBackend.Controllers
         public async Task<IActionResult> Create([FromBody]DomainEvent eventItem)
         {
             DomainEvent receivedEvent = new DomainEvent();
+            List<DomainEvent> evensList = await GetAllEvents();
             Guid Id = eventItem.Id;
+            if (!Validation(eventItem, evensList))
+            {
+                return BadRequest();
+            }
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
@@ -113,6 +123,42 @@ namespace EventBackend.Controllers
             }
             return Ok(eventItem);
         }
+
+        private Boolean Validation(DomainEvent eventItem, List<DomainEvent> eventlist)
+        {
+            var time = eventItem.StartDate.TimeOfDay;
+            //case 1: overlapping events
+            foreach (var item in eventlist)
+            {
+                var oldstartdate = item.StartDate.Date;
+                var newstartdate = eventItem.StartDate.Date;
+                if (oldstartdate == newstartdate)
+                {
+                    var oldstarttime = item.StartDate.TimeOfDay;
+                    var newstarttime = eventItem.StartDate.TimeOfDay;
+                    var oldendtime = oldstarttime.Add(TimeSpan.FromMinutes(item.Duration));
+                    var newendtime = newstarttime.Add(TimeSpan.FromMinutes(eventItem.Duration));
+                    if (!((newstarttime > oldendtime && newendtime > oldstarttime) || (newstarttime < oldstarttime && newendtime < oldendtime)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            // case2 : No event should start after 8:00PM
+            var endtime = TimeSpan.Parse("20:00");
+
+            if (TimeSpan.Compare(time, endtime) >= 1)
+            {
+                return false;
+
+            }
+
+
+            return true;
+        }
+
+       
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAsync(Guid id)
         {
