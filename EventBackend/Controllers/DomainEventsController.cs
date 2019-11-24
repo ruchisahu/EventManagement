@@ -19,7 +19,12 @@ namespace EventBackend.Controllers
     {
         string Baseurl = "https://crud-api.azurewebsites.net";
 
-
+        enum ErrorCode
+        {
+            Overlap =1,
+            TimeLimit=2,
+            Default=3
+        }
         public async Task<List<DomainEvent>> GetAllEvents()
         {
             List<DomainEvent> eventitems = new List<DomainEvent>();
@@ -32,7 +37,6 @@ namespace EventBackend.Controllers
                 client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
                 HttpResponseMessage Res = await client.GetAsync("/api/peek/");
 
                 //Checking the response is successful or not which is sent using HttpClient  
@@ -62,8 +66,7 @@ namespace EventBackend.Controllers
         public async Task<IActionResult> AllEvents()
         {
             List<DomainEvent> eventitems =  await GetAllEvents();
-
-            return Ok(eventitems);
+             return Ok(eventitems);
 
         }
 
@@ -92,9 +95,14 @@ namespace EventBackend.Controllers
             DomainEvent receivedEvent = new DomainEvent();
             List<DomainEvent> eventList = await GetAllEvents();
             Guid Id = eventItem.Id;
-            if (!Validation(eventItem, eventList))
+            var v= Validation(eventItem, eventList);
+            if (Validation(eventItem, eventList) == ErrorCode.Overlap)
             {
-                return BadRequest();
+                 return BadRequest(new { message = "Overlapping Events" });
+            }
+            if (Validation(eventItem, eventList) == ErrorCode.TimeLimit)
+            {
+                return BadRequest(new { message = "Time limit exceed" });
             }
             using (var client = new HttpClient())
             {
@@ -105,24 +113,21 @@ namespace EventBackend.Controllers
                 string eventobject = JsonConvert.SerializeObject(eventItem);
                 string data = "{\"" + "data\":" + eventobject + "}";
 
-
-
                 StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
 
                 using (var response = await client.PostAsync("/api/create/" +Id , content))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
-                        return BadRequest();
+                        return BadRequest(new { message = "bad request "});
                         
                     }
-                    
                 }
             }
             return Ok(eventItem);
         }
 
-        private Boolean Validation(DomainEvent eventItem, List<DomainEvent> eventlist)
+        private ErrorCode Validation(DomainEvent eventItem, List<DomainEvent> eventlist)
         {
             var time = eventItem.StartDate.TimeOfDay;
             //case 1: overlapping events
@@ -138,7 +143,7 @@ namespace EventBackend.Controllers
                     var newendtime = newstarttime.Add(TimeSpan.FromMinutes(eventItem.Duration));
                     if (!((newstarttime > oldendtime && newendtime > oldstarttime) || (newstarttime < oldstarttime && newendtime < oldendtime)))
                     {
-                        return false;
+                        return ErrorCode.Overlap;
                     }
                 }
             }
@@ -147,12 +152,9 @@ namespace EventBackend.Controllers
 
             if (TimeSpan.Compare(time, endtime) >= 1)
             {
-                return false;
-
+                return ErrorCode.TimeLimit;
             }
-
-
-            return true;
+            return ErrorCode.Default;
         }
 
        
@@ -173,13 +175,10 @@ namespace EventBackend.Controllers
                     {
                         return NotFound();
                     }
-                        string apiResponse = await response.Content.ReadAsStringAsync();
-                 
-
+                    string apiResponse = await response.Content.ReadAsStringAsync();
                     dynamic json = JValue.Parse(apiResponse);
                     var jsonmessage = json.message;
-
-                        Event = JsonConvert.DeserializeObject<DomainEvent>(jsonmessage.ToString());
+                    Event = JsonConvert.DeserializeObject<DomainEvent>(jsonmessage.ToString());
                 }
             }
             return Ok(Event);
@@ -190,9 +189,13 @@ namespace EventBackend.Controllers
         {
             DomainEvent receivedevent = new DomainEvent();
             List<DomainEvent> eventList = await GetAllEvents();
-            if (!Validation(domainevent, eventList))
+            if (Validation(domainevent, eventList) == ErrorCode.Overlap)
             {
-                return BadRequest();
+                return BadRequest(new { message = "Overlapping Events" });
+            }
+            if (Validation(domainevent, eventList) == ErrorCode.TimeLimit)
+            {
+                return BadRequest(new { message = "Time limit exceed" });
             }
             using (var client = new HttpClient())
             {
@@ -204,21 +207,11 @@ namespace EventBackend.Controllers
                 string data = "{\"" + "data\":" + eventobject + "}";
                 StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
 
-
-                //var content = new MultipartFormDataContent();
-                //content.Add(new StringContent(domainevent.Id.ToString()), "Id");
-                //content.Add(new StringContent(domainevent.Name), "Name");
-                //content.Add(new StringContent(domainevent.StartDate.ToString()), "StartDate");
-                //content.Add(new StringContent(domainevent.Duration.ToString()), "Duration");
-                //content.Add(new StringContent(domainevent.Brief), "Brief");
-
                 using (var response = await client.PutAsync("/api/update/"+ domainevent.Id.ToString(), content))
                 {
                     if(!response.IsSuccessStatusCode)
                     {
-                        //string apiResponse = await response.Content.ReadAsStringAsync();
-                        //return 
-                        //receivedEvent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                        return BadRequest();
                     }
                 }
             }

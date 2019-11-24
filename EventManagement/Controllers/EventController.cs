@@ -40,7 +40,6 @@ namespace EventManagement.Controllers
                 //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
                 HttpResponseMessage Res = await client.GetAsync("api/DomainEvents/");
 
-                //Checking the response is successful or not which is sent using HttpClient  
                 if (Res.IsSuccessStatusCode)
                 {
                     var EventResponse = Res.Content.ReadAsStringAsync().Result;
@@ -95,8 +94,7 @@ namespace EventManagement.Controllers
         }
 
         // POST: Event/Create
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
+       
         [HttpPost]
          public async Task<IActionResult> Create([Bind("Id,Name,StartDate,Duration,Brief")] DomainEvent eventItem)
           {
@@ -120,8 +118,14 @@ namespace EventManagement.Controllers
                 StringContent content = new StringContent(postitem, Encoding.UTF8, "application/json");
 
                 using (var response = await client.PostAsync("api/DomainEvents/", content))
-                { 
+                {
+                   
                     string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        ViewBag.Message = apiResponse.ToString();
+                        return View("Status");
+                    }
                     receivedEvent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
                 }
             }
