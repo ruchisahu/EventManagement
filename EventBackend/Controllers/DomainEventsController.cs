@@ -90,9 +90,9 @@ namespace EventBackend.Controllers
         public async Task<IActionResult> Create([FromBody]DomainEvent eventItem)
         {
             DomainEvent receivedEvent = new DomainEvent();
-            List<DomainEvent> evensList = await GetAllEvents();
+            List<DomainEvent> eventList = await GetAllEvents();
             Guid Id = eventItem.Id;
-            if (!Validation(eventItem, evensList))
+            if (!Validation(eventItem, eventList))
             {
                 return BadRequest();
             }
@@ -114,9 +114,7 @@ namespace EventBackend.Controllers
                     if (!response.IsSuccessStatusCode)
                     {
                         return BadRequest();
-                        //string apiResponse = await response.Content.ReadAsStringAsync();
-                        //return 
-                        //receivedEvent = JsonConvert.DeserializeObject<DomainEvent>(apiResponse);
+                        
                     }
                     
                 }
@@ -191,6 +189,11 @@ namespace EventBackend.Controllers
         public async Task<IActionResult> Update(DomainEvent domainevent)
         {
             DomainEvent receivedevent = new DomainEvent();
+            List<DomainEvent> eventList = await GetAllEvents();
+            if (!Validation(domainevent, eventList))
+            {
+                return BadRequest();
+            }
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(Baseurl);
