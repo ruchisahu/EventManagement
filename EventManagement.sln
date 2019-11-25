@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventAuth", "EventAuth\Even
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpHelper", "HttpHelper\HttpHelper.csproj", "{FF03D278-A4C8-4666-865B-C62567D8F12E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpHelper.Tests", "HttpHelper.Tests\HttpHelper.Tests.csproj", "{49B36BD9-720A-4954-9649-FD15F6F49EBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{FF03D278-A4C8-4666-865B-C62567D8F12E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF03D278-A4C8-4666-865B-C62567D8F12E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF03D278-A4C8-4666-865B-C62567D8F12E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49B36BD9-720A-4954-9649-FD15F6F49EBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49B36BD9-720A-4954-9649-FD15F6F49EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49B36BD9-720A-4954-9649-FD15F6F49EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49B36BD9-720A-4954-9649-FD15F6F49EBC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

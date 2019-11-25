@@ -57,12 +57,14 @@ namespace HttpHelper
 
             return response;
         }
-        public async Task<String> Create(Guid Id)
+        public async Task<String> Create(String Id, String data)
         {
             String response = null;
             try
             {
-                HttpResponseMessage Res = await client.DeleteAsync(deleteEndpoint + Id);
+                StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
+                HttpResponseMessage Res = await client.PostAsync(createEndpoint + Id, content);
+                
                 if (Res.IsSuccessStatusCode)
                 {
                     response = await Res.Content.ReadAsStringAsync();
@@ -76,7 +78,7 @@ namespace HttpHelper
 
             return response;
         }
-        public async Task<String> Delete(Guid Id)
+        public async Task<String> Delete(String Id)
             {
 
             String response = null;
@@ -96,12 +98,13 @@ namespace HttpHelper
 
             return response;
         }
-        public async Task<String> Edit(string data, String Id, HttpContent content)
+        public async Task<String> Edit(String Id, String data)
             {
 
             String response = null;
             try
             {
+                StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
                 HttpResponseMessage Res = await client.PutAsync("/api/update/" + Id, content);
                   if (Res.IsSuccessStatusCode)
                 {
@@ -117,7 +120,7 @@ namespace HttpHelper
             return response;
         }
 
-        public async Task<String> Details(Guid id)
+        public async Task<String> Details(string id)
             {
             String response = null;
             try
