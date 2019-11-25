@@ -18,6 +18,7 @@ namespace EventBackend.Controllers
     public class DomainEventsController : ControllerBase
     {
         string Baseurl = "https://crud-api.azurewebsites.net";
+        HttpHelper.EvHttpClient helper = new HttpHelper.EvHttpClient("https://crud-api.azurewebsites.net", "d376f4e6-8150-407d-a694-1cd25cb11270", "/api/peek/", "/api/create/", "/api/remove/", "/api/update/", "/api/read/");
 
         enum ErrorCode
         {
@@ -30,63 +31,50 @@ namespace EventBackend.Controllers
         {
             List<DomainEvent> eventitems = new List<DomainEvent>();
             List<int> rowlist = new List<int>();
-            using (var client = new HttpClient())
+
+            try
             {
+                var EventResponse = await helper.GetAllEvents();
+                dynamic json = JValue.Parse(EventResponse);
+                var jsonmessage = json.message;
 
-                client.BaseAddress = new Uri(Baseurl);
-
-                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                HttpResponseMessage Res = await client.GetAsync("/api/peek/");
-
-                //Checking the response is successful or not which is sent using HttpClient  
-                if (Res.IsSuccessStatusCode)
+                foreach (var item in jsonmessage)
                 {
-                    //Storing the response details recieved from web api   
-                    var EventResponse = Res.Content.ReadAsStringAsync().Result;
-                    dynamic json = JValue.Parse(EventResponse);
-                    var jsonmessage = json.message;
-
-                    foreach (var item in jsonmessage)
-                    {
-                        var data = item.data;
-                        var data1 = data.ToString();
-                        DomainEvent domain = new DomainEvent();
-                        domain = JsonConvert.DeserializeObject<DomainEvent>(data1);
-                        eventitems.Add(domain);
-                    }
-
+                    var data = item.data;
+                    var data1 = data.ToString();
+                    DomainEvent domain = new DomainEvent();
+                    domain = JsonConvert.DeserializeObject<DomainEvent>(data1);
+                    eventitems.Add(domain);
                 }
-                //returning the event list to view  
-                return eventitems;
-
             }
+            catch (Exception ex)
+            {
+                eventitems = null;
+            }
+
+            return eventitems;
         }
         [HttpGet]
         public async Task<IActionResult> AllEvents()
         {
-            List<DomainEvent> eventitems =  await GetAllEvents();
-             return Ok(eventitems);
-
+            List<DomainEvent> eventitems = await GetAllEvents();
+            //:todo if eventItems is null return appropriate result
+            return Ok(eventitems);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid Id)
         {
-            using (var client = new HttpClient())
+            
+            try
             {
-                client.BaseAddress = new Uri(Baseurl);
-                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                using (var response = await client.DeleteAsync("/api/remove/" + Id))
-                {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                }
+                var res = await helper.Delete(Id.ToString());
+            }
+            catch (Exception ex)
+            {
+                //return appropriate error 
             }
             return Ok();
-
         }
 
         [HttpPost]
@@ -109,26 +97,19 @@ namespace EventBackend.Controllers
             {
                 return BadRequest(new { message = "The schedule will span across 3 days." });
             }
-            using (var client = new HttpClient())
+
+            string eventobject = JsonConvert.SerializeObject(eventItem);
+            string data = "{\"" + "data\":" + eventobject + "}";
+
+            try
             {
-                client.BaseAddress = new Uri(Baseurl);
-                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                string eventobject = JsonConvert.SerializeObject(eventItem);
-                string data = "{\"" + "data\":" + eventobject + "}";
-
-                StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                using (var response = await client.PostAsync("/api/create/" +Id , content))
-                {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return BadRequest(new { message = "bad request "});
-                        
-                    }
-                }
+                var response = await helper.Create(eventItem.Id.ToString(), data);
+            } catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message.ToString() });
             }
+
+            //:todo if response is invalid return error
             return Ok(eventItem);
         }
 
@@ -176,24 +157,12 @@ namespace EventBackend.Controllers
         public async Task<IActionResult> GetAsync(Guid id)
         {
             DomainEvent Event = new DomainEvent();
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(Baseurl);
-                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                using (var response = await client.GetAsync("/api/read/" + id))
-                {
+            var response = await helper.Details(id.ToString());
 
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return NotFound();
-                    }
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    dynamic json = JValue.Parse(apiResponse);
-                    var jsonmessage = json.message;
-                    Event = JsonConvert.DeserializeObject<DomainEvent>(jsonmessage.ToString());
-                }
-            }
+            dynamic json = JValue.Parse(response);
+            var jsonmessage = json.message;
+            Event = JsonConvert.DeserializeObject<DomainEvent>(jsonmessage.ToString());
+
             return Ok(Event);
         }
 
@@ -215,23 +184,16 @@ namespace EventBackend.Controllers
             {
                 return BadRequest(new { message = "The schedule will span across 3 days." });
             }
-            using (var client = new HttpClient())
+           
+            string eventobject = JsonConvert.SerializeObject(domainevent);
+            string data = "{\"" + "data\":" + eventobject + "}";
+
+            try {
+                var response = await helper.Edit(domainevent.Id.ToString(), data);
+            }
+            catch (Exception ex)
             {
-                client.BaseAddress = new Uri(Baseurl);
-                client.DefaultRequestHeaders.Add("X-API-KEY", "d376f4e6-8150-407d-a694-1cd25cb11270");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                string eventobject = JsonConvert.SerializeObject(domainevent);
-                string data = "{\"" + "data\":" + eventobject + "}";
-                StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
-
-                using (var response = await client.PutAsync("/api/update/"+ domainevent.Id.ToString(), content))
-                {
-                    if(!response.IsSuccessStatusCode)
-                    {
-                        return BadRequest();
-                    }
-                }
+                return BadRequest(new { message = ex.Message.ToString() });
             }
             return Ok(domainevent);
         }
