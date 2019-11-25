@@ -132,13 +132,15 @@ namespace EventBackend.Controllers
             return Ok(eventItem);
         }
 
-        private ErrorCode Validation(DomainEvent eventItem, List<DomainEvent> eventlist)
+        private ErrorCode Validation(DomainEvent eventItem, List<DomainEvent> eventlist,Guid? skipGuid=null)
         {
             var time = eventItem.StartDate.TimeOfDay;
             var newstartdate = eventItem.StartDate.Date;
             //case 1: overlapping events
             foreach (var item in eventlist)
             {
+                if ((skipGuid!=null) && (item.Id == skipGuid))
+                    continue;
                 var oldstartdate = item.StartDate.Date;
                 
                 if (oldstartdate == newstartdate)
@@ -201,7 +203,7 @@ namespace EventBackend.Controllers
             DomainEvent receivedevent = new DomainEvent();
             List<DomainEvent> eventList = await GetAllEvents();
             var v = Validation(domainevent, eventList);
-            if (Validation(domainevent, eventList) == ErrorCode.Overlap)
+            if (Validation(domainevent, eventList,domainevent.Id) == ErrorCode.Overlap)
             {
                 return BadRequest(new { message = "Overlapping Events: Events should not overlaped." });
             }

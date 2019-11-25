@@ -2,7 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using HttpHelper;
 using System;
 
-namespace EvHttpClient.Tests
+namespace HttpHelper.Tests
 {
     [TestClass]
     public class DataTierManualTests

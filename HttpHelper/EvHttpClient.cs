@@ -84,7 +84,7 @@ namespace HttpHelper
             String response = null;
             try
             {
-                HttpResponseMessage Res = await client.DeleteAsync("/api/remove/" + Id);
+                HttpResponseMessage Res = await client.DeleteAsync(deleteEndpoint + Id);
                 if (Res.IsSuccessStatusCode)
                 {
                     response = await Res.Content.ReadAsStringAsync();
@@ -105,7 +105,7 @@ namespace HttpHelper
             try
             {
                 StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
-                HttpResponseMessage Res = await client.PutAsync("/api/update/" + Id, content);
+                HttpResponseMessage Res = await client.PutAsync(updateEndpoint + Id, content);
                   if (Res.IsSuccessStatusCode)
                 {
                     response = await Res.Content.ReadAsStringAsync();
@@ -125,7 +125,7 @@ namespace HttpHelper
             String response = null;
             try
             {
-                HttpResponseMessage Res = await client.GetAsync("/api/read/" + id);
+                HttpResponseMessage Res = await client.GetAsync(detailEndpoint + id);
 
                 if (Res.IsSuccessStatusCode)
                 {
