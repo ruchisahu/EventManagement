@@ -38,8 +38,8 @@ namespace HttpHelper
                         var data = item.data;
                         var data1 = data.ToString();
                       //  DomainEvent domain = new DomainEvent();
-                        domain = JsonConvert.DeserializeObject<DomainEvent>(data1);
-                        eventitems.Add(domain);
+                      //  domain = JsonConvert.DeserializeObject<DomainEvent>(data1);
+                       // eventitems.Add(domain);
                     }
                     return eventitems;
 
